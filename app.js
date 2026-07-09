@@ -86,7 +86,106 @@ const ChartEditor = {
     chalk: ['#fc97af', '#87f7cf', '#f7f494', '#72ccff', '#f7c5a0', '#d4a4eb', '#d2f5a6', '#76f2f2'],
     essos: ['#893448', '#d95850', '#eb8146', '#ffb248', '#f2d643', '#ebdba4', '#95d475', '#68be8d', '#52c4a7'],
     wonderland: ['#4ea397', '#22c3aa', '#7bd9a5', '#d0648a', '#f58db2', '#f2b3c9', '#4ea397', '#22c3aa', '#7bd9a5'],
-    walden: ['#3fb1e3', '#6be6c1', '#626c91', '#a0a7e6', '#c4ebad', '#96dee8', '#3fb1e3', '#6be6c1', '#626c91']
+    walden: ['#3fb1e3', '#6be6c1', '#626c91', '#a0a7e6', '#c4ebad', '#96dee8', '#3fb1e3', '#6be6c1', '#626c91'],
+    westeros: ['#516b91', '#59c4e6', '#edafda', '#93b7e3', '#a5e7f0', '#cbb0e3', '#516b91', '#59c4e6', '#edafda'],
+    shine: ['#c12e34', '#e6b600', '#0098d9', '#2b821d', '#005eaa', '#339ca8', '#cda819', '#32a487'],
+    infographic: ['#C1232B', '#B5C334', '#FCCE10', '#E87C25', '#27727B', '#FE8463', '#9BCA63', '#FAD860', '#F3A43B'],
+    macarons: ['#2ec7c9', '#b6a2de', '#5ab1ef', '#ffb980', '#d87a80', '#8d98b3', '#e5cf0d', '#97b552', '#95706d'],
+    roma: ['#E01F54', '#001852', '#f5e8c8', '#b8d2c7', '#c6b38e', '#a4d8f0', '#234b78', '#fdb933', '#83795f']
+  },
+
+  themeStateMap: {
+    default: {
+      background: { color: '#ffffff' },
+      series: { lineColor: '#5470c6', barColor: '#5470c6' },
+      xAxis: { lineColor: '#666666' },
+      yAxis: { lineColor: '#666666' },
+      title: { textColor: '#333333' }
+    },
+    vintage: {
+      background: { color: '#fef8ef' },
+      series: { lineColor: '#d87c7c', barColor: '#d87c7c' },
+      xAxis: { lineColor: '#c2b29a' },
+      yAxis: { lineColor: '#c2b29a' },
+      title: { textColor: '#4b565b' }
+    },
+    dark: {
+      background: { color: '#100c2a' },
+      series: { lineColor: '#4992ff', barColor: '#4992ff' },
+      xAxis: { lineColor: '#4b565b' },
+      yAxis: { lineColor: '#4b565b' },
+      title: { textColor: '#ffffff' }
+    },
+    light: {
+      background: { color: '#ffffff' },
+      series: { lineColor: '#409EFF', barColor: '#409EFF' },
+      xAxis: { lineColor: '#DCDFE6' },
+      yAxis: { lineColor: '#DCDFE6' },
+      title: { textColor: '#303133' }
+    },
+    chalk: {
+      background: { color: '#293441' },
+      series: { lineColor: '#fc97af', barColor: '#fc97af' },
+      xAxis: { lineColor: '#759aa0' },
+      yAxis: { lineColor: '#759aa0' },
+      title: { textColor: '#ffffff' }
+    },
+    essos: {
+      background: { color: '#fcf8ef' },
+      series: { lineColor: '#893448', barColor: '#893448' },
+      xAxis: { lineColor: '#e4d6bc' },
+      yAxis: { lineColor: '#e4d6bc' },
+      title: { textColor: '#333333' }
+    },
+    wonderland: {
+      background: { color: '#333333' },
+      series: { lineColor: '#4ea397', barColor: '#4ea397' },
+      xAxis: { lineColor: '#444444' },
+      yAxis: { lineColor: '#444444' },
+      title: { textColor: '#ffffff' }
+    },
+    walden: {
+      background: { color: '#fcfafc' },
+      series: { lineColor: '#3fb1e3', barColor: '#3fb1e3' },
+      xAxis: { lineColor: '#cccccc' },
+      yAxis: { lineColor: '#cccccc' },
+      title: { textColor: '#333333' }
+    },
+    westeros: {
+      background: { color: '#ffffff' },
+      series: { lineColor: '#516b91', barColor: '#516b91' },
+      xAxis: { lineColor: '#cccccc' },
+      yAxis: { lineColor: '#cccccc' },
+      title: { textColor: '#516b91' }
+    },
+    shine: {
+      background: { color: '#ffffff' },
+      series: { lineColor: '#c12e34', barColor: '#c12e34' },
+      xAxis: { lineColor: '#cccccc' },
+      yAxis: { lineColor: '#cccccc' },
+      title: { textColor: '#333333' }
+    },
+    infographic: {
+      background: { color: '#fcf8ef' },
+      series: { lineColor: '#C1232B', barColor: '#C1232B' },
+      xAxis: { lineColor: '#cccccc' },
+      yAxis: { lineColor: '#cccccc' },
+      title: { textColor: '#333333' }
+    },
+    macarons: {
+      background: { color: '#ffffff' },
+      series: { lineColor: '#2ec7c9', barColor: '#2ec7c9' },
+      xAxis: { lineColor: '#cccccc' },
+      yAxis: { lineColor: '#cccccc' },
+      title: { textColor: '#333333' }
+    },
+    roma: {
+      background: { color: '#ffffff' },
+      series: { lineColor: '#E01F54', barColor: '#E01F54' },
+      xAxis: { lineColor: '#cccccc' },
+      yAxis: { lineColor: '#cccccc' },
+      title: { textColor: '#333333' }
+    }
   },
 
   chartTypeNames: {
@@ -1985,10 +2084,66 @@ const ChartEditor = {
       this.chart = echarts.init(dom, themeName);
     }
 
-    this.state.series.colorPalette = themeName;
+    this.applyThemeState(themeName);
 
     this.updateChart();
     this.showToast('主题已切换');
+  },
+
+  applyThemeState(themeName) {
+    const themeState = this.themeStateMap[themeName];
+    if (!themeState) return;
+
+    if (themeState.background) {
+      if (themeState.background.color !== undefined) {
+        this.state.background.color = themeState.background.color;
+      }
+    }
+
+    if (themeState.series) {
+      if (themeState.series.lineColor !== undefined) {
+        this.state.series.lineColor = themeState.series.lineColor;
+      }
+      if (themeState.series.barColor !== undefined) {
+        this.state.series.barColor = themeState.series.barColor;
+      }
+    }
+
+    if (themeState.xAxis) {
+      if (themeState.xAxis.lineColor !== undefined) {
+        this.state.xAxis.lineColor = themeState.xAxis.lineColor;
+      }
+    }
+
+    if (themeState.yAxis) {
+      if (themeState.yAxis.lineColor !== undefined) {
+        this.state.yAxis.lineColor = themeState.yAxis.lineColor;
+      }
+    }
+
+    this.state.series.colorPalette = themeName;
+
+    this.syncThemeUI();
+  },
+
+  syncThemeUI() {
+    const { state } = this;
+
+    const setColor = (colorId, textId, value) => {
+      const colorEl = document.getElementById(colorId);
+      const textEl = document.getElementById(textId);
+      if (colorEl) colorEl.value = value;
+      if (textEl) textEl.value = value;
+    };
+
+    setColor('bgColor', 'bgColorText', state.background.color);
+    setColor('lineColor', 'lineColorText', state.series.lineColor);
+    setColor('barColor', 'barColorText', state.series.barColor);
+    setColor('xAxisLineColor', 'xAxisLineColorText', state.xAxis.lineColor);
+    setColor('yAxisLineColor', 'yAxisLineColorText', state.yAxis.lineColor);
+
+    const themeSelect = document.getElementById('chartTheme');
+    if (themeSelect) themeSelect.value = state.series.colorPalette;
   },
 };
  
