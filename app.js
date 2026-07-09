@@ -200,7 +200,16 @@ const ChartEditor = {
     area: '面积图',
     candlestick: 'K线图',
     effectScatter: '涟漪散点',
-    graph: '关系图'
+    graph: '关系图',
+    sankey: '桑基图',
+    tree: '树图',
+    sunburst: '旭日图',
+    treemap: '矩形树图',
+    heatmap: '热力图',
+    boxplot: '盒须图',
+    parallel: '平行坐标',
+    themeRiver: '主题河流',
+    calendar: '日历图'
   },
 
   dataFormatHints: {
@@ -263,6 +272,51 @@ const ChartEditor = {
       title: '关系图',
       text: '需要包含「节点名称」和「数值」两列数据，用于展示节点之间的关联关系。',
       example: '节点A, 100 | 节点B, 80 | 节点C, 60'
+    },
+    sankey: {
+      title: '桑基图',
+      text: '需要包含「源节点」「目标节点」「数值」三列数据，用于展示数据的流向和流量大小。',
+      example: '访问首页, 商品列表, 100 | 商品列表, 商品详情, 80 | 商品详情, 加入购物车, 60'
+    },
+    tree: {
+      title: '树图',
+      text: '需要包含「节点名称」和「数值」两列数据，用于展示层级结构关系，首项为根节点。',
+      example: '总公司, 1000 | 部门A, 400 | 部门B, 350 | 部门C, 250'
+    },
+    sunburst: {
+      title: '旭日图',
+      text: '需要包含「层级名称」和「数值」两列数据，用于展示多层级的占比关系。',
+      example: '公司, 1000 | 技术部, 400 | 产品部, 350 | 运营部, 250'
+    },
+    treemap: {
+      title: '矩形树图',
+      text: '需要包含「名称」和「数值」两列数据，用矩形面积大小表示数值占比。',
+      example: '产品A, 320 | 产品B, 280 | 产品C, 200 | 产品D, 150'
+    },
+    heatmap: {
+      title: '热力图',
+      text: '需要包含「X轴类目」「Y轴类目」「数值」三列数据，用颜色深浅表示数值大小。',
+      example: '周一, 上午, 85 | 周一, 下午, 70 | 周二, 上午, 90'
+    },
+    boxplot: {
+      title: '盒须图',
+      text: '需要包含「类目名称」和5个统计值：最小值、Q1、中位数、Q3、最大值，用于展示数据分布。',
+      example: '班级A, 60, 70, 80, 88, 95 | 班级B, 55, 68, 78, 85, 92'
+    },
+    parallel: {
+      title: '平行坐标',
+      text: '需要包含多个维度的数值数据，用于展示多维数据之间的关系。',
+      example: '样本A, 80, 90, 70, 85 | 样本B, 70, 85, 95, 75'
+    },
+    themeRiver: {
+      title: '主题河流',
+      text: '需要包含「时间」「主题名称」「数值」三列数据，用于展示主题随时间的变化趋势。',
+      example: '2024-01, 主题A, 100 | 2024-01, 主题B, 80 | 2024-02, 主题A, 120'
+    },
+    calendar: {
+      title: '日历图',
+      text: '需要包含「日期」和「数值」两列数据，用于展示按日历分布的数据情况。',
+      example: '2024-01-01, 120 | 2024-01-02, 200 | 2024-01-03, 150'
     }
   },
 
@@ -575,7 +629,7 @@ const ChartEditor = {
         }
       },
       legend: this.getLegendOption(),
-      grid: state.chartType === 'pie' || state.chartType === 'gauge' || state.chartType === 'radar' || state.chartType === 'funnel' || state.chartType === 'graph' ? undefined : {
+      grid: ['pie', 'gauge', 'radar', 'funnel', 'graph', 'sankey', 'tree', 'sunburst', 'treemap', 'parallel', 'calendar', 'themeRiver'].includes(this.chartType) ? undefined : {
         left: '3%',
         right: '4%',
         bottom: state.legend.show && state.legend.position === 'bottom' ? '10%' : '3%',
@@ -585,7 +639,7 @@ const ChartEditor = {
       series: this.getSeriesOption()
     };
  
-    if (['line', 'bar', 'scatter', 'area', 'effectScatter', 'candlestick', 'pictorialBar'].includes(this.chartType)) {
+    if (['line', 'bar', 'scatter', 'area', 'effectScatter', 'candlestick', 'pictorialBar', 'heatmap', 'boxplot'].includes(this.chartType)) {
       option.xAxis = {
         show: state.xAxis.show,
         type: state.xAxis.type,
@@ -653,7 +707,120 @@ const ChartEditor = {
         }
       };
     }
- 
+
+    if (this.chartType === 'parallel') {
+      const dimCount = Math.max(state.data.length, 4);
+      const dimensions = [];
+      for (let i = 0; i < dimCount; i++) {
+        dimensions.push({
+          name: state.data[i] ? state.data[i].name : `维度${i + 1}`,
+          max: Math.max(...state.data.map(d => d.value)) * 1.2
+        });
+      }
+      option.parallel = {
+        left: '5%',
+        right: '5%',
+        bottom: state.legend.show && state.legend.position === 'bottom' ? '12%' : '5%',
+        top: state.title.show ? 70 : 30,
+        parallelAxisDefault: {
+          axisLine: {
+            lineStyle: { color: state.xAxis.lineColor }
+          },
+          axisLabel: {
+            color: this.isDarkTheme ? '#9ca3af' : '#6b7280'
+          },
+          nameTextStyle: {
+            color: this.isDarkTheme ? '#9ca3af' : '#6b7280'
+          }
+        }
+      };
+      option.parallelAxis = dimensions;
+    }
+
+    if (this.chartType === 'calendar') {
+      option.calendar = {
+        top: state.title.show ? 70 : 30,
+        left: 'center',
+        cellSize: ['auto', 15],
+        range: '2024',
+        itemStyle: {
+          borderWidth: 1,
+          borderColor: this.isDarkTheme ? '#2a2d35' : '#fff'
+        },
+        dayLabel: {
+          color: this.isDarkTheme ? '#9ca3af' : '#6b7280',
+          firstDay: 1
+        },
+        monthLabel: {
+          color: this.isDarkTheme ? '#9ca3af' : '#6b7280'
+        },
+        yearLabel: {
+          show: false
+        }
+      };
+    }
+
+    if (this.chartType === 'heatmap') {
+      const xCategories = state.data.map(d => d.name);
+      const yCategories = ['周一', '周二', '周三', '周四', '周五'];
+      option.xAxis.data = xCategories;
+      option.xAxis.type = 'category';
+      option.yAxis = {
+        ...option.yAxis,
+        type: 'category',
+        data: yCategories,
+        name: ''
+      };
+      option.visualMap = {
+        min: 0,
+        max: Math.max(...state.data.map(d => d.value)) * 1.2,
+        calculable: true,
+        orient: 'horizontal',
+        left: 'center',
+        bottom: state.legend.show && state.legend.position === 'bottom' ? '8%' : '2%',
+        textStyle: {
+          color: this.isDarkTheme ? '#9ca3af' : '#6b7280'
+        }
+      };
+    }
+
+    if (this.chartType === 'themeRiver') {
+      option.singleAxis = {
+        top: state.title.show ? 70 : 30,
+        bottom: state.legend.show && state.legend.position === 'bottom' ? '12%' : '5%',
+        left: '5%',
+        right: '5%',
+        type: 'time',
+        axisLine: {
+          lineStyle: { color: state.xAxis.lineColor }
+        },
+        axisLabel: {
+          color: this.isDarkTheme ? '#9ca3af' : '#6b7280'
+        },
+        splitLine: {
+          show: true,
+          lineStyle: {
+            color: this.isDarkTheme ? '#353a45' : '#eef0f3',
+            type: 'dashed'
+          }
+        }
+      };
+    }
+
+    if (this.chartType === 'calendar') {
+      option.visualMap = {
+        min: 0,
+        max: Math.max(...state.data.map(d => d.value)) * 1.2,
+        calculable: true,
+        orient: 'horizontal',
+        left: 'center',
+        bottom: 10,
+        textStyle: {
+          color: this.isDarkTheme ? '#9ca3af' : '#6b7280'
+        }
+      };
+    }
+
     return option;
   },
  
@@ -967,6 +1134,251 @@ const ChartEditor = {
             force: {
               repulsion: 200,
               edgeLength: 80
+            }
+          };
+          break;
+
+        case 'sankey':
+          const sankeyNodes = [];
+          const sankeyLinks = [];
+          const nodeSet = new Set();
+          
+          state.data.forEach((d, i) => {
+            if (!nodeSet.has(d.name)) {
+              nodeSet.add(d.name);
+              sankeyNodes.push({ name: d.name });
+            }
+            if (i < state.data.length - 1) {
+              const targetName = state.data[i + 1].name;
+              sankeyLinks.push({
+                source: d.name,
+                target: targetName,
+                value: d.value
+              });
+            }
+          });
+          
+          baseSeries = {
+            ...baseSeries,
+            type: 'sankey',
+            data: sankeyNodes,
+            links: sankeyLinks,
+            left: '10%',
+            right: '10%',
+            top: 60,
+            bottom: 20,
+            label: {
+              show: true,
+              fontSize: state.series.labelFontSize,
+              color: this.isDarkTheme ? '#e5e7eb' : '#1f2937'
+            },
+            lineStyle: {
+              color: 'gradient',
+              curveness: 0.5,
+              opacity: 0.5
+            },
+            emphasis: {
+              focus: 'adjacency'
+            }
+          };
+          break;
+
+        case 'tree':
+          const treeData = this.buildTreeData(state.data);
+          baseSeries = {
+            ...baseSeries,
+            type: 'tree',
+            data: [treeData],
+            top: '5%',
+            left: '15%',
+            bottom: '5%',
+            right: '15%',
+            symbolSize: 10,
+            orient: 'LR',
+            label: {
+              show: true,
+              fontSize: state.series.labelFontSize,
+              position: 'left',
+              verticalAlign: 'middle',
+              align: 'right'
+            },
+            leaves: {
+              label: {
+                position: 'right',
+                verticalAlign: 'middle',
+                align: 'left'
+              }
+            },
+            lineStyle: {
+              color: seriesColor
+            },
+            expandAndCollapse: true,
+            initialTreeDepth: 2
+          };
+          break;
+
+        case 'sunburst':
+          const sunburstData = this.buildSunburstData(state.data, count);
+          baseSeries = {
+            ...baseSeries,
+            type: 'sunburst',
+            data: sunburstData,
+            radius: ['10%', '70%'],
+            center: ['50%', '50%'],
+            label: {
+              show: true,
+              fontSize: state.series.labelFontSize,
+              rotate: 'radial'
+            },
+            itemStyle: {
+              borderColor: '#fff',
+              borderWidth: 2
+            },
+            emphasis: {
+              focus: 'ancestor'
+            }
+          };
+          break;
+
+        case 'treemap':
+          const treemapData = state.data.map(d => ({
+            name: d.name,
+            value: d.value
+          }));
+          baseSeries = {
+            ...baseSeries,
+            type: 'treemap',
+            data: treemapData,
+            left: '5%',
+            right: '5%',
+            top: 60,
+            bottom: '5%',
+            label: {
+              show: true,
+              fontSize: state.series.labelFontSize
+            },
+            itemStyle: {
+              borderColor: '#fff',
+              borderWidth: 1,
+              gapWidth: 1
+            },
+            breadcrumb: {
+              show: false
+            }
+          };
+          break;
+
+        case 'heatmap':
+          const heatmapData = [];
+          const yCats = ['周一', '周二', '周三', '周四', '周五'];
+          state.data.forEach((d, xIdx) => {
+            yCats.forEach((y, yIdx) => {
+              heatmapData.push([xIdx, yIdx, Math.round(d.value * (0.5 + Math.random() * 0.5))]);
+            });
+          });
+          baseSeries = {
+            ...baseSeries,
+            type: 'heatmap',
+            data: heatmapData,
+            label: {
+              show: state.series.labelShow,
+              fontSize: state.series.labelFontSize - 2,
+              color: '#fff'
+            },
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            }
+          };
+          break;
+
+        case 'boxplot':
+          const boxData = [];
+          for (let i = 0; i < count; i++) {
+            const seriesVals = state.data.map(d => {
+              const variation = 1 + (Math.sin(i + d.value) * 0.3);
+              return d.value * variation;
+            });
+            const sorted = [...seriesVals].sort((a, b) => a - b);
+            const min = sorted[0];
+            const q1 = sorted[Math.floor(sorted.length * 0.25)];
+            const median = sorted[Math.floor(sorted.length * 0.5)];
+            const q3 = sorted[Math.floor(sorted.length * 0.75)];
+            const max = sorted[sorted.length - 1];
+            boxData.push([min, q1, median, q3, max]);
+          }
+          baseSeries = {
+            ...baseSeries,
+            type: 'boxplot',
+            data: boxData,
+            itemStyle: {
+              color: palette[0],
+              borderColor: palette[0]
+            }
+          };
+          break;
+
+        case 'parallel':
+          const parallelData = [];
+          const dimCount = Math.max(state.data.length, 4);
+          for (let i = 0; i < count; i++) {
+            const row = [];
+            for (let j = 0; j < dimCount; j++) {
+              const baseVal = state.data[j] ? state.data[j].value : 50;
+              row.push(Math.round(baseVal * (0.7 + Math.random() * 0.6)));
+            }
+            parallelData.push(row);
+          }
+          baseSeries = {
+            ...baseSeries,
+            type: 'parallel',
+            data: parallelData,
+            lineStyle: {
+              width: 2,
+              opacity: 0.8
+            }
+          };
+          break;
+
+        case 'themeRiver':
+          const riverData = [];
+          const themes = count > 1 ? state.data.slice(0, count).map(d => d.name) : ['主题A', '主题B', '主题C'];
+          const months = ['2024-01', '2024-02', '2024-03', '2024-04', '2024-05', '2024-06'];
+          themes.forEach((theme, tIdx) => {
+            months.forEach((month, mIdx) => {
+              const baseVal = state.data[tIdx] ? state.data[tIdx].value : 100;
+              riverData.push([month, Math.round(baseVal * (0.7 + Math.random() * 0.6)), theme]);
+            });
+          });
+          baseSeries = {
+            ...baseSeries,
+            type: 'themeRiver',
+            data: riverData,
+            label: {
+              show: state.series.labelShow,
+              fontSize: state.series.labelFontSize
+            }
+          };
+          break;
+
+        case 'calendar':
+          const calData = [];
+          const startDate = new Date('2024-01-01');
+          state.data.forEach((d, i) => {
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i * 3);
+            const dateStr = date.toISOString().split('T')[0];
+            calData.push([dateStr, d.value]);
+          });
+          baseSeries = {
+            ...baseSeries,
+            type: 'heatmap',
+            coordinateSystem: 'calendar',
+            data: calData,
+            label: {
+              show: false
             }
           };
           break;
@@ -1292,13 +1704,13 @@ const ChartEditor = {
     const lineGroups = ['seriesLineGroup', 'seriesSymbolGroup', 'seriesAreaGroup'];
     const barGroup = 'seriesBarGroup';
     const pieGroup = 'seriesPieGroup';
- 
+
     const showLine = ['line', 'area', 'radar'].includes(this.chartType);
     const showSymbol = ['line', 'area', 'scatter', 'effectScatter'].includes(this.chartType);
     const showArea = ['line', 'area'].includes(this.chartType);
     const showBar = ['bar', 'pictorialBar'].includes(this.chartType);
     const showPie = this.chartType === 'pie';
- 
+
     lineGroups.forEach(groupId => {
       const el = document.getElementById(groupId);
       if (el) {
@@ -1311,20 +1723,20 @@ const ChartEditor = {
         }
       }
     });
- 
+
     const barEl = document.getElementById(barGroup);
     if (barEl) {
       barEl.style.display = showBar ? '' : 'none';
     }
- 
+
     const pieEl = document.getElementById(pieGroup);
     if (pieEl) {
       pieEl.style.display = showPie ? '' : 'none';
     }
- 
+
     const axisPanel = document.querySelector('[data-panel="axis"]');
     const axisTab = document.querySelector('[data-prop="axis"]');
-    const hasAxis = ['line', 'bar', 'scatter', 'area', 'effectScatter', 'candlestick', 'pictorialBar'].includes(this.chartType);
+    const hasAxis = ['line', 'bar', 'scatter', 'area', 'effectScatter', 'candlestick', 'pictorialBar', 'heatmap', 'boxplot'].includes(this.chartType);
     if (axisPanel && axisTab) {
       axisTab.style.display = hasAxis ? '' : 'none';
       if (!hasAxis && axisTab.classList.contains('active')) {
@@ -1706,6 +2118,63 @@ const ChartEditor = {
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  },
+
+  buildTreeData(data) {
+    if (!data || data.length === 0) return { name: '根节点', children: [] };
+    
+    const root = {
+      name: data[0].name,
+      value: data[0].value,
+      children: []
+    };
+    
+    const remaining = data.slice(1);
+    const childrenPerNode = Math.ceil(remaining.length / 2);
+    
+    for (let i = 0; i < remaining.length; i++) {
+      const item = remaining[i];
+      if (i < childrenPerNode) {
+        root.children.push({
+          name: item.name,
+          value: item.value,
+          children: []
+        });
+      } else {
+        const parentIdx = (i - childrenPerNode) % root.children.length;
+        if (root.children[parentIdx]) {
+          root.children[parentIdx].children.push({
+            name: item.name,
+            value: item.value
+          });
+        }
+      }
+    }
+    
+    return root;
+  },
+
+  buildSunburstData(data, count) {
+    if (!data || data.length === 0) return [];
+    
+    const result = [];
+    const groupSize = Math.ceil(data.length / 3);
+    
+    for (let i = 0; i < Math.min(3, data.length); i++) {
+      const start = i * groupSize;
+      const end = Math.min(start + groupSize, data.length);
+      const children = data.slice(start, end).map(d => ({
+        name: d.name,
+        value: d.value
+      }));
+      
+      result.push({
+        name: `分类${i + 1}`,
+        children: children
+      });
+    }
+    
+    return result;
   },
 
   updateDataFormatHint() {
