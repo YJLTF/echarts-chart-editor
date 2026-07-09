@@ -999,8 +999,6 @@ const ChartEditor = {
     this.bindSelect('labelPosition', 'series', 'labelPosition');
     this.bindRange('labelFontSize', 'labelFontSizeValue', 'series', 'labelFontSize', 'px');
  
-    this.bindSelect('colorPalette', 'series', 'colorPalette');
-
     const chartThemeEl = document.getElementById('chartTheme');
     if (chartThemeEl) {
       chartThemeEl.addEventListener('change', () => {
@@ -1458,7 +1456,7 @@ const ChartEditor = {
     setVal('labelFontSize', state.series.labelFontSize);
     setText('labelFontSizeValue', state.series.labelFontSize + 'px');
 
-    setVal('colorPalette', state.series.colorPalette);
+    setVal('chartTheme', state.series.colorPalette);
 
     setCheck('xAxisShow', state.xAxis.show);
     setVal('xAxisType', state.xAxis.type);
@@ -1986,6 +1984,8 @@ const ChartEditor = {
     } else {
       this.chart = echarts.init(dom, themeName);
     }
+
+    this.state.series.colorPalette = themeName;
 
     this.updateChart();
     this.showToast('主题已切换');
