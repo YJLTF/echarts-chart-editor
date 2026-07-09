@@ -557,6 +557,30 @@
  
             <div class="prop-group">
               <div class="prop-group-title">
+                <span>图表主题</span>
+              </div>
+              <div class="prop-item">
+                <label>主题风格</label>
+                <select id="chartTheme" class="select">
+                  <option value="default">默认主题</option>
+                  <option value="vintage">复古风</option>
+                  <option value="dark">深色</option>
+                  <option value="light">亮色</option>
+                  <option value="chalk">粉笔</option>
+                  <option value="essos">Essos</option>
+                  <option value="wonderland">仙境</option>
+                  <option value="walden">瓦尔登</option>
+                  <option value="westeros">维斯特洛</option>
+                  <option value="shine">闪耀</option>
+                  <option value="infographic">信息图</option>
+                  <option value="macarons">马卡龙</option>
+                  <option value="roma">罗马</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="prop-group">
+              <div class="prop-group-title">
                 <span>色板</span>
               </div>
               <div class="prop-item">
@@ -665,37 +689,134 @@
           </div>
  
           <div class="prop-panel" data-panel="data">
-            <div class="prop-group">
-              <div class="prop-group-title">
-                <span>数据编辑</span>
+            <div class="data-source-tabs">
+              <button class="data-source-tab active" data-source="manual">手动输入</button>
+              <button class="data-source-tab" data-source="file">文件导入</button>
+              <button class="data-source-tab" data-source="api">API接口</button>
+            </div>
+
+            <div class="data-source-panel active" data-source-panel="manual">
+              <div class="prop-group">
+                <div class="prop-group-title">
+                  <span>数据编辑</span>
+                </div>
+                <div class="prop-item data-table-header">
+                  <span>类目</span>
+                  <span>数值</span>
+                </div>
+                <div id="dataEditor" class="data-editor">
+                </div>
+                <div class="data-actions">
+                  <button class="btn btn-sm btn-ghost" id="addDataBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="12" y1="5" x2="12" y2="19"/>
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    添加数据
+                  </button>
+                  <button class="btn btn-sm btn-ghost" id="randomDataBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="16 3 21 3 21 8"/>
+                      <line x1="4" y1="20" x2="21" y2="3"/>
+                      <polyline points="21 16 21 21 16 21"/>
+                      <line x1="15" y1="15" x2="21" y2="21"/>
+                      <line x1="4" y1="4" x2="9" y2="9"/>
+                    </svg>
+                    随机数据
+                  </button>
+                </div>
               </div>
-              <div class="prop-item data-table-header">
-                <span>类目</span>
-                <span>数值</span>
+            </div>
+
+            <div class="data-source-panel" data-source-panel="file">
+              <div class="prop-group">
+                <div class="prop-group-title">
+                  <span>文件导入</span>
+                </div>
+                <div class="file-upload-area" id="fileUploadArea">
+                  <div class="upload-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="17 8 12 3 7 8"/>
+                      <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                  </div>
+                  <p class="upload-text">点击或拖拽文件到此处</p>
+                  <p class="upload-hint">支持 .csv, .txt, .json 格式</p>
+                  <button class="btn btn-sm btn-primary" id="selectFileBtn">选择文件</button>
+                </div>
+                <input type="file" id="dataFileInput" accept=".csv,.txt,.json" style="display: none;">
               </div>
-              <div id="dataEditor" class="data-editor">
-              </div>
-              <div class="data-actions">
-                <button class="btn btn-sm btn-ghost" id="addDataBtn">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <line x1="5" y1="12" x2="19" y2="12"/>
-                  </svg>
-                  添加数据
-                </button>
-                <button class="btn btn-sm btn-ghost" id="randomDataBtn">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="16 3 21 3 21 8"/>
-                    <line x1="4" y1="20" x2="21" y2="3"/>
-                    <polyline points="21 16 21 21 16 21"/>
-                    <line x1="15" y1="15" x2="21" y2="21"/>
-                    <line x1="4" y1="4" x2="9" y2="9"/>
-                  </svg>
-                  随机数据
+              <div class="prop-group" id="fileParseResult" style="display: none;">
+                <div class="prop-group-title">
+                  <span>解析结果</span>
+                </div>
+                <div class="parse-info" id="parseInfo"></div>
+                <div class="data-mapping">
+                  <div class="prop-item">
+                    <label>类目字段</label>
+                    <select id="categoryField" class="select"></select>
+                  </div>
+                  <div class="prop-item">
+                    <label>数值字段</label>
+                    <select id="valueField" class="select"></select>
+                  </div>
+                </div>
+                <button class="btn btn-sm btn-primary" id="applyFileDataBtn" style="width: 100%; margin-top: 8px;">
+                  应用数据
                 </button>
               </div>
             </div>
- 
+
+            <div class="data-source-panel" data-source-panel="api">
+              <div class="prop-group">
+                <div class="prop-group-title">
+                  <span>API 接口</span>
+                </div>
+                <div class="prop-item">
+                  <label>接口地址</label>
+                  <input type="text" id="apiUrl" placeholder="https://api.example.com/data" class="input">
+                </div>
+                <div class="prop-item">
+                  <label>请求方式</label>
+                  <select id="apiMethod" class="select">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                  </select>
+                </div>
+                <div class="prop-item">
+                  <label>数据路径</label>
+                  <input type="text" id="apiDataPath" placeholder="data.list (可选)" class="input">
+                </div>
+                <div class="prop-item">
+                  <label>类目字段</label>
+                  <input type="text" id="apiCategoryField" placeholder="name" class="input">
+                </div>
+                <div class="prop-item">
+                  <label>数值字段</label>
+                  <input type="text" id="apiValueField" placeholder="value" class="input">
+                </div>
+                <button class="btn btn-sm btn-primary" id="fetchApiDataBtn" style="width: 100%; margin-top: 8px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"/>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                  </svg>
+                  获取数据
+                </button>
+              </div>
+            </div>
+
+            <div class="prop-group">
+              <div class="prop-group-title">
+                <span>数据格式提示</span>
+              </div>
+              <div class="data-format-hint" id="dataFormatHint">
+                <p class="hint-title">当前图表类型：<strong id="currentChartTypeHint">折线图</strong></p>
+                <p class="hint-text" id="chartTypeHint">需要包含「类目名称」和「数值」两列数据</p>
+                <p class="hint-example">示例：周一, 120 | 周二, 200 | 周三, 150</p>
+              </div>
+            </div>
+
             <div class="prop-group">
               <div class="prop-group-title">
                 <span>多系列</span>

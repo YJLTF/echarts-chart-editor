@@ -88,6 +88,321 @@ const ChartEditor = {
     wonderland: ['#4ea397', '#22c3aa', '#7bd9a5', '#d0648a', '#f58db2', '#f2b3c9', '#4ea397', '#22c3aa', '#7bd9a5'],
     walden: ['#3fb1e3', '#6be6c1', '#626c91', '#a0a7e6', '#c4ebad', '#96dee8', '#3fb1e3', '#6be6c1', '#626c91']
   },
+
+  chartTypeNames: {
+    line: '折线图',
+    bar: '柱状图',
+    pie: '饼图',
+    scatter: '散点图',
+    radar: '雷达图',
+    gauge: '仪表盘',
+    funnel: '漏斗图',
+    pictorialBar: '象形柱图',
+    area: '面积图',
+    candlestick: 'K线图',
+    effectScatter: '涟漪散点',
+    graph: '关系图'
+  },
+
+  dataFormatHints: {
+    line: {
+      title: '折线图',
+      text: '需要包含「类目名称」和「数值」两列数据，用于展示数据随类目的变化趋势。',
+      example: '周一, 120 | 周二, 200 | 周三, 150'
+    },
+    bar: {
+      title: '柱状图',
+      text: '需要包含「类目名称」和「数值」两列数据，用于对比不同类目之间的数值大小。',
+      example: '产品A, 320 | 产品B, 180 | 产品C, 250'
+    },
+    pie: {
+      title: '饼图',
+      text: '需要包含「名称」和「数值」两列数据，用于展示各部分占整体的比例关系。',
+      example: '直接访问, 335 | 邮件营销, 310 | 视频广告, 234'
+    },
+    scatter: {
+      title: '散点图',
+      text: '需要包含「X轴数值」和「Y轴数值」两列数据，用于展示两个变量之间的相关性。',
+      example: '10, 25 | 20, 45 | 30, 65 | 40, 35'
+    },
+    radar: {
+      title: '雷达图',
+      text: '需要包含「指标名称」和「数值」两列数据，用于多维度数据的综合对比。',
+      example: '销售, 6500 | 管理, 7000 | 技术, 8000 | 客服, 6000'
+    },
+    gauge: {
+      title: '仪表盘',
+      text: '只需一列「数值」数据，用于展示单个指标的完成度或进度。',
+      example: '完成率, 75'
+    },
+    funnel: {
+      title: '漏斗图',
+      text: '需要包含「阶段名称」和「数值」两列数据，用于展示业务流程各环节的转化情况。',
+      example: '浏览, 1000 | 点击, 500 | 加购, 200 | 购买, 80'
+    },
+    pictorialBar: {
+      title: '象形柱图',
+      text: '需要包含「类目名称」和「数值」两列数据，用象形图标展示数据大小。',
+      example: '一季度, 120 | 二季度, 200 | 三季度, 150'
+    },
+    area: {
+      title: '面积图',
+      text: '需要包含「类目名称」和「数值」两列数据，用于展示数据变化趋势和累积量。',
+      example: '1月, 120 | 2月, 200 | 3月, 150 | 4月, 180'
+    },
+    candlestick: {
+      title: 'K线图',
+      text: '需要包含「开盘价」「收盘价」「最低价」「最高价」四列数据，用于金融行情分析。',
+      example: '2024-01, 100, 120, 90, 130'
+    },
+    effectScatter: {
+      title: '涟漪散点图',
+      text: '需要包含「X轴数值」和「Y轴数值」两列数据，带涟漪动画效果的散点图。',
+      example: '10, 25 | 20, 45 | 30, 65'
+    },
+    graph: {
+      title: '关系图',
+      text: '需要包含「节点名称」和「数值」两列数据，用于展示节点之间的关联关系。',
+      example: '节点A, 100 | 节点B, 80 | 节点C, 60'
+    }
+  },
+
+  parsedFileData: null,
+
+  chartThemes: {
+    vintage: {
+      color: ['#d87c7c', '#919e8b', '#d7ab82', '#6e7074', '#61a0a8', '#efa18d', '#787464', '#cc7e63', '#724e58', '#4b565b'],
+      backgroundColor: '#fef8ef',
+      textStyle: {},
+      title: { textStyle: { color: '#4b565b' }, subtextStyle: { color: '#9a9080' } },
+      line: { itemStyle: { borderWidth: 2 }, lineStyle: { width: 3 } },
+      categoryAxis: {
+        axisLine: { lineStyle: { color: '#c2b29a' } },
+        axisTick: { lineStyle: { color: '#c2b29a' } },
+        axisLabel: { color: '#6e7074' },
+        splitLine: { lineStyle: { color: ['#e8e4d4'] } }
+      },
+      valueAxis: {
+        axisLine: { lineStyle: { color: '#c2b29a' } },
+        axisTick: { lineStyle: { color: '#c2b29a' } },
+        axisLabel: { color: '#6e7074' },
+        splitLine: { lineStyle: { color: ['#e8e4d4'] } }
+      }
+    },
+    dark: {
+      color: ['#4992ff', '#7cffb2', '#fddd60', '#ff6e76', '#58d9f9', '#05c091', '#ff8a45', '#8d48e3', '#dd79ff'],
+      backgroundColor: '#100c2a',
+      textStyle: {},
+      title: { textStyle: { color: '#ffffff' }, subtextStyle: { color: '#aaaaaa' } },
+      line: { itemStyle: { borderWidth: 2 }, lineStyle: { width: 3 } },
+      categoryAxis: {
+        axisLine: { lineStyle: { color: '#4b565b' } },
+        axisTick: { lineStyle: { color: '#4b565b' } },
+        axisLabel: { color: '#dddddd' },
+        splitLine: { lineStyle: { color: ['#1e1e3f'] } }
+      },
+      valueAxis: {
+        axisLine: { lineStyle: { color: '#4b565b' } },
+        axisTick: { lineStyle: { color: '#4b565b' } },
+        axisLabel: { color: '#dddddd' },
+        splitLine: { lineStyle: { color: ['#1e1e3f'] } }
+      },
+      legend: { textStyle: { color: '#eeeeee' } },
+      tooltip: { backgroundColor: 'rgba(50, 50, 50, 0.85)' }
+    },
+    chalk: {
+      color: ['#fc97af', '#87f7cf', '#f7f494', '#72ccff', '#f7c5a0', '#d4a4eb', '#d2f5a6', '#76f2f2'],
+      backgroundColor: '#293441',
+      textStyle: { color: '#bdcdd8' },
+      title: { textStyle: { color: '#ffffff' }, subtextStyle: { color: '#bdcdd8' } },
+      line: { itemStyle: { borderWidth: 2 }, lineStyle: { width: 3 } },
+      categoryAxis: {
+        axisLine: { lineStyle: { color: '#759aa0' } },
+        axisTick: { lineStyle: { color: '#759aa0' } },
+        axisLabel: { color: '#bdcdd8' },
+        splitLine: { lineStyle: { color: ['#3d4b58'] } }
+      },
+      valueAxis: {
+        axisLine: { lineStyle: { color: '#759aa0' } },
+        axisTick: { lineStyle: { color: '#759aa0' } },
+        axisLabel: { color: '#bdcdd8' },
+        splitLine: { lineStyle: { color: ['#3d4b58'] } }
+      },
+      legend: { textStyle: { color: '#bdcdd8' } }
+    },
+    essos: {
+      color: ['#893448', '#d95850', '#eb8146', '#ffb248', '#f2d643', '#ebdba4', '#95d475', '#68be8d', '#52c4a7'],
+      backgroundColor: 'rgba(252,248,239,0.5)',
+      textStyle: {},
+      title: { textStyle: { color: '#333333' }, subtextStyle: { color: '#999999' } },
+      line: { itemStyle: { borderWidth: 2 }, lineStyle: { width: 3 } },
+      categoryAxis: {
+        axisLine: { lineStyle: { color: '#e4d6bc' } },
+        axisTick: { lineStyle: { color: '#e4d6bc' } },
+        axisLabel: { color: '#333333' },
+        splitLine: { lineStyle: { color: ['#eee8d5'] } }
+      },
+      valueAxis: {
+        axisLine: { lineStyle: { color: '#e4d6bc' } },
+        axisTick: { lineStyle: { color: '#e4d6bc' } },
+        axisLabel: { color: '#333333' },
+        splitLine: { lineStyle: { color: ['#eee8d5'] } }
+      }
+    },
+    wonderland: {
+      color: ['#4ea397', '#22c3aa', '#7bd9a5', '#d0648a', '#f58db2', '#f2b3c9', '#4ea397', '#22c3aa', '#7bd9a5'],
+      backgroundColor: '#333',
+      textStyle: {},
+      title: { textStyle: { color: '#fff' }, subtextStyle: { color: '#ccc' } },
+      line: { itemStyle: { borderWidth: 2 }, lineStyle: { width: 3 } },
+      categoryAxis: {
+        axisLine: { lineStyle: { color: '#444' } },
+        axisTick: { lineStyle: { color: '#444' } },
+        axisLabel: { color: '#ddd' },
+        splitLine: { lineStyle: { color: ['#222'] } }
+      },
+      valueAxis: {
+        axisLine: { lineStyle: { color: '#444' } },
+        axisTick: { lineStyle: { color: '#444' } },
+        axisLabel: { color: '#ddd' },
+        splitLine: { lineStyle: { color: ['#222'] } }
+      },
+      legend: { textStyle: { color: '#eee' } }
+    },
+    walden: {
+      color: ['#3fb1e3', '#6be6c1', '#626c91', '#a0a7e6', '#c4ebad', '#96dee8', '#3fb1e3', '#6be6c1', '#626c91'],
+      backgroundColor: 'rgba(252,250,252,0.5)',
+      textStyle: {},
+      title: { textStyle: { color: '#333333' }, subtextStyle: { color: '#999999' } },
+      line: { itemStyle: { borderWidth: 2 }, lineStyle: { width: 3 } },
+      categoryAxis: {
+        axisLine: { lineStyle: { color: '#ccc' } },
+        axisTick: { lineStyle: { color: '#ccc' } },
+        axisLabel: { color: '#666666' },
+        splitLine: { lineStyle: { color: ['#eee'] } }
+      },
+      valueAxis: {
+        axisLine: { lineStyle: { color: '#ccc' } },
+        axisTick: { lineStyle: { color: '#ccc' } },
+        axisLabel: { color: '#666666' },
+        splitLine: { lineStyle: { color: ['#eee'] } }
+      }
+    },
+    westeros: {
+      color: ['#516b91', '#59c4e6', '#edafda', '#93b7e3', '#a5e7f0', '#cbb0e3', '#516b91', '#59c4e6', '#edafda'],
+      backgroundColor: 'rgba(255,255,255,0)',
+      textStyle: {},
+      title: { textStyle: { color: '#516b91' }, subtextStyle: { color: '#999999' } },
+      line: { itemStyle: { borderWidth: 2 }, lineStyle: { width: 3 } },
+      categoryAxis: {
+        axisLine: { lineStyle: { color: '#ccc' } },
+        axisTick: { lineStyle: { color: '#ccc' } },
+        axisLabel: { color: '#516b91' },
+        splitLine: { lineStyle: { color: ['#eee'] } }
+      },
+      valueAxis: {
+        axisLine: { lineStyle: { color: '#ccc' } },
+        axisTick: { lineStyle: { color: '#ccc' } },
+        axisLabel: { color: '#516b91' },
+        splitLine: { lineStyle: { color: ['#eee'] } }
+      }
+    },
+    shine: {
+      color: ['#c12e34', '#e6b600', '#0098d9', '#2b821d', '#005eaa', '#339ca8', '#cda819', '#32a487'],
+      backgroundColor: 'rgba(255,255,255,0)',
+      textStyle: {},
+      title: { textStyle: { color: '#333333' }, subtextStyle: { color: '#999999' } },
+      line: { itemStyle: { borderWidth: 2 }, lineStyle: { width: 3 } },
+      categoryAxis: {
+        axisLine: { lineStyle: { color: '#ccc' } },
+        axisTick: { lineStyle: { color: '#ccc' } },
+        axisLabel: { color: '#333333' },
+        splitLine: { lineStyle: { color: ['#eee'] } }
+      },
+      valueAxis: {
+        axisLine: { lineStyle: { color: '#ccc' } },
+        axisTick: { lineStyle: { color: '#ccc' } },
+        axisLabel: { color: '#333333' },
+        splitLine: { lineStyle: { color: ['#eee'] } }
+      }
+    },
+    infographic: {
+      color: ['#C1232B', '#B5C334', '#FCCE10', '#E87C25', '#27727B', '#FE8463', '#9BCA63', '#FAD860', '#F3A43B'],
+      backgroundColor: 'rgba(252,248,239,0)',
+      textStyle: {},
+      title: { textStyle: { color: '#333333' }, subtextStyle: { color: '#999999' } },
+      line: { itemStyle: { borderWidth: 2 }, lineStyle: { width: 3 } },
+      categoryAxis: {
+        axisLine: { lineStyle: { color: '#ccc' } },
+        axisTick: { lineStyle: { color: '#ccc' } },
+        axisLabel: { color: '#333333' },
+        splitLine: { lineStyle: { color: ['#eee'] } }
+      },
+      valueAxis: {
+        axisLine: { lineStyle: { color: '#ccc' } },
+        axisTick: { lineStyle: { color: '#ccc' } },
+        axisLabel: { color: '#333333' },
+        splitLine: { lineStyle: { color: ['#eee'] } }
+      }
+    },
+    macarons: {
+      color: ['#2ec7c9', '#b6a2de', '#5ab1ef', '#ffb980', '#d87a80', '#8d98b3', '#e5cf0d', '#97b552', '#95706d'],
+      backgroundColor: 'rgba(255,255,255,0)',
+      textStyle: {},
+      title: { textStyle: { color: '#333333' }, subtextStyle: { color: '#999999' } },
+      line: { itemStyle: { borderWidth: 2 }, lineStyle: { width: 3 } },
+      categoryAxis: {
+        axisLine: { lineStyle: { color: '#ccc' } },
+        axisTick: { lineStyle: { color: '#ccc' } },
+        axisLabel: { color: '#333333' },
+        splitLine: { lineStyle: { color: ['#eee'] } }
+      },
+      valueAxis: {
+        axisLine: { lineStyle: { color: '#ccc' } },
+        axisTick: { lineStyle: { color: '#ccc' } },
+        axisLabel: { color: '#333333' },
+        splitLine: { lineStyle: { color: ['#eee'] } }
+      }
+    },
+    roma: {
+      color: ['#E01F54', '#001852', '#f5e8c8', '#b8d2c7', '#c6b38e', '#a4d8f0', '#234b78', '#fdb933', '#83795f'],
+      backgroundColor: 'rgba(255,255,255,0)',
+      textStyle: {},
+      title: { textStyle: { color: '#333333' }, subtextStyle: { color: '#999999' } },
+      line: { itemStyle: { borderWidth: 2 }, lineStyle: { width: 3 } },
+      categoryAxis: {
+        axisLine: { lineStyle: { color: '#ccc' } },
+        axisTick: { lineStyle: { color: '#ccc' } },
+        axisLabel: { color: '#333333' },
+        splitLine: { lineStyle: { color: ['#eee'] } }
+      },
+      valueAxis: {
+        axisLine: { lineStyle: { color: '#ccc' } },
+        axisTick: { lineStyle: { color: '#ccc' } },
+        axisLabel: { color: '#333333' },
+        splitLine: { lineStyle: { color: ['#eee'] } }
+      }
+    },
+    light: {
+      color: ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#909399', '#00B2FF', '#15D6B3', '#FF9900', '#F56C6C'],
+      backgroundColor: '#ffffff',
+      textStyle: {},
+      title: { textStyle: { color: '#303133' }, subtextStyle: { color: '#909399' } },
+      line: { itemStyle: { borderWidth: 2 }, lineStyle: { width: 3 } },
+      categoryAxis: {
+        axisLine: { lineStyle: { color: '#DCDFE6' } },
+        axisTick: { lineStyle: { color: '#DCDFE6' } },
+        axisLabel: { color: '#606266' },
+        splitLine: { lineStyle: { color: ['#EBEEF5'] } }
+      },
+      valueAxis: {
+        axisLine: { lineStyle: { color: '#DCDFE6' } },
+        axisTick: { lineStyle: { color: '#DCDFE6' } },
+        axisLabel: { color: '#606266' },
+        splitLine: { lineStyle: { color: ['#EBEEF5'] } }
+      }
+    }
+  },
  
   init() {
     this.initChart();
@@ -95,6 +410,9 @@ const ChartEditor = {
     this.renderDataEditor();
     this.updateChart();
     this.updateSeriesVisibility();
+    this.updateDataFormatHint();
+    this.initDataSourceTabs();
+    this.initFileUpload();
   },
  
   initChart() {
@@ -682,6 +1000,13 @@ const ChartEditor = {
     this.bindRange('labelFontSize', 'labelFontSizeValue', 'series', 'labelFontSize', 'px');
  
     this.bindSelect('colorPalette', 'series', 'colorPalette');
+
+    const chartThemeEl = document.getElementById('chartTheme');
+    if (chartThemeEl) {
+      chartThemeEl.addEventListener('change', () => {
+        this.changeChartTheme(chartThemeEl.value);
+      });
+    }
  
     this.bindCheckbox('xAxisShow', 'xAxis', 'show');
     this.bindSelect('xAxisType', 'xAxis', 'type');
@@ -748,6 +1073,13 @@ const ChartEditor = {
     document.getElementById('fullscreenBtn').addEventListener('click', () => {
       this.toggleFullscreen();
     });
+
+    const fetchApiBtn = document.getElementById('fetchApiDataBtn');
+    if (fetchApiBtn) {
+      fetchApiBtn.addEventListener('click', () => {
+        this.fetchApiData();
+      });
+    }
   },
  
   bindCheckbox(id, group, key) {
@@ -855,6 +1187,7 @@ const ChartEditor = {
   changeChartType(type) {
     this.chartType = type;
     this.updateSeriesVisibility();
+    this.updateDataFormatHint();
     this.updateChart();
   },
  
@@ -1276,7 +1609,387 @@ const ChartEditor = {
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  }
+  },
+
+  updateDataFormatHint() {
+    const hint = this.dataFormatHints[this.chartType];
+    const typeNameEl = document.getElementById('currentChartTypeHint');
+    const hintTextEl = document.getElementById('chartTypeHint');
+    const hintExampleEl = document.querySelector('.hint-example');
+    
+    if (hint && typeNameEl && hintTextEl && hintExampleEl) {
+      typeNameEl.textContent = hint.title;
+      hintTextEl.textContent = hint.text;
+      hintExampleEl.textContent = '示例：' + hint.example;
+    }
+  },
+
+  initDataSourceTabs() {
+    const tabs = document.querySelectorAll('.data-source-tab');
+    const panels = document.querySelectorAll('.data-source-panel');
+    
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const source = tab.dataset.source;
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        panels.forEach(p => {
+          p.classList.toggle('active', p.dataset.sourcePanel === source);
+        });
+      });
+    });
+  },
+
+  initFileUpload() {
+    const uploadArea = document.getElementById('fileUploadArea');
+    const fileInput = document.getElementById('dataFileInput');
+    const selectBtn = document.getElementById('selectFileBtn');
+    const applyBtn = document.getElementById('applyFileDataBtn');
+    
+    if (!uploadArea || !fileInput) return;
+
+    if (selectBtn) {
+      selectBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fileInput.click();
+      });
+    }
+
+    uploadArea.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        this.parseFile(files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const files = e.target.files;
+      if (files && files.length > 0) {
+        this.parseFile(files[0]);
+      }
+      e.target.value = '';
+    });
+
+    if (applyBtn) {
+      applyBtn.addEventListener('click', () => {
+        this.applyParsedData();
+      });
+    }
+  },
+
+  parseFile(file) {
+    const reader = new FileReader();
+    const fileName = file.name.toLowerCase();
+    
+    reader.onload = (e) => {
+      try {
+        let data = null;
+        let fields = [];
+        
+        if (fileName.endsWith('.json')) {
+          const json = JSON.parse(e.target.result);
+          if (Array.isArray(json)) {
+            data = json;
+          } else if (json.data && Array.isArray(json.data)) {
+            data = json.data;
+          } else {
+            data = [json];
+          }
+          if (data.length > 0 && typeof data[0] === 'object') {
+            fields = Object.keys(data[0]);
+          }
+        } else if (fileName.endsWith('.csv') || fileName.endsWith('.txt')) {
+          const text = e.target.result;
+          const result = this.parseCSV(text);
+          data = result.data;
+          fields = result.fields;
+        } else {
+          this.showToast('不支持的文件格式');
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          this.showToast('文件中没有有效数据');
+          return;
+        }
+
+        this.parsedFileData = { data, fields, fileName: file.name };
+        this.showParseResult(data.length, fields);
+        this.showToast(`成功解析 ${data.length} 条数据`);
+      } catch (err) {
+        console.error('文件解析失败:', err);
+        this.showToast('文件解析失败：' + err.message);
+      }
+    };
+
+    reader.onerror = () => {
+      this.showToast('文件读取失败');
+    };
+
+    if (fileName.endsWith('.json')) {
+      reader.readAsText(file);
+    } else {
+      reader.readAsText(file);
+    }
+  },
+
+  parseCSV(text) {
+    const lines = text.split(/\r?\n/).filter(line => line.trim());
+    if (lines.length === 0) return { data: [], fields: [] };
+
+    const delimiter = this.detectDelimiter(lines[0]);
+    let fields = [];
+    let data = [];
+    let startIndex = 0;
+
+    const firstLineValues = this.splitCSVLine(lines[0], delimiter);
+    const allNumbers = firstLineValues.every(v => !isNaN(parseFloat(v)) && v.trim() !== '');
+    
+    if (!allNumbers && firstLineValues.length > 1) {
+      fields = firstLineValues.map(f => f.trim());
+      startIndex = 1;
+    } else {
+      fields = firstLineValues.map((_, i) => `字段${i + 1}`);
+    }
+
+    for (let i = startIndex; i < lines.length; i++) {
+      const values = this.splitCSVLine(lines[i], delimiter);
+      if (values.length === 0) continue;
+      const row = {};
+      values.forEach((val, idx) => {
+        const key = fields[idx] || `字段${idx + 1}`;
+        const num = parseFloat(val);
+        row[key] = isNaN(num) ? val.trim() : num;
+      });
+      data.push(row);
+    }
+
+    return { data, fields };
+  },
+
+  detectDelimiter(line) {
+    const delimiters = [',', '\t', ';', '|'];
+    let bestDelimiter = ',';
+    let maxCount = 0;
+    
+    delimiters.forEach(delim => {
+      const count = line.split(delim).length;
+      if (count > maxCount) {
+        maxCount = count;
+        bestDelimiter = delim;
+      }
+    });
+    
+    return bestDelimiter;
+  },
+
+  splitCSVLine(line, delimiter) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === delimiter && !inQuotes) {
+        result.push(current);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    
+    result.push(current);
+    return result;
+  },
+
+  showParseResult(rowCount, fields) {
+    const resultEl = document.getElementById('fileParseResult');
+    const infoEl = document.getElementById('parseInfo');
+    const categorySelect = document.getElementById('categoryField');
+    const valueSelect = document.getElementById('valueField');
+    
+    if (!resultEl || !infoEl || !categorySelect || !valueSelect) return;
+
+    const fileName = this.parsedFileData ? this.parsedFileData.fileName : '';
+    infoEl.innerHTML = `文件：${fileName}<br>数据行数：${rowCount}<br>字段数量：${fields.length}`;
+
+    categorySelect.innerHTML = '';
+    valueSelect.innerHTML = '';
+    
+    fields.forEach((field, idx) => {
+      const opt1 = document.createElement('option');
+      opt1.value = field;
+      opt1.textContent = field;
+      categorySelect.appendChild(opt1);
+
+      const opt2 = document.createElement('option');
+      opt2.value = field;
+      opt2.textContent = field;
+      valueSelect.appendChild(opt2);
+    });
+
+    if (fields.length >= 2) {
+      valueSelect.selectedIndex = 1;
+    }
+
+    resultEl.style.display = 'block';
+  },
+
+  applyParsedData() {
+    if (!this.parsedFileData) {
+      this.showToast('请先选择文件');
+      return;
+    }
+
+    const categoryField = document.getElementById('categoryField').value;
+    const valueField = document.getElementById('valueField').value;
+
+    if (!categoryField || !valueField) {
+      this.showToast('请选择类目字段和数值字段');
+      return;
+    }
+
+    const newData = this.parsedFileData.data
+      .filter(item => item[categoryField] !== undefined && item[valueField] !== undefined)
+      .map(item => ({
+        name: String(item[categoryField]),
+        value: Number(item[valueField]) || 0
+      }));
+
+    if (newData.length === 0) {
+      this.showToast('没有有效的数据');
+      return;
+    }
+
+    this.state.data = newData;
+    this.renderDataEditor();
+    this.updateChart();
+    this.showToast(`已应用 ${newData.length} 条数据`);
+
+    const tabs = document.querySelectorAll('.data-source-tab');
+    const panels = document.querySelectorAll('.data-source-panel');
+    tabs.forEach(t => t.classList.remove('active'));
+    panels.forEach(p => p.classList.remove('active'));
+    document.querySelector('.data-source-tab[data-source="manual"]').classList.add('active');
+    document.querySelector('.data-source-panel[data-source-panel="manual"]').classList.add('active');
+  },
+
+  fetchApiData() {
+    const urlEl = document.getElementById('apiUrl');
+    const methodEl = document.getElementById('apiMethod');
+    const dataPathEl = document.getElementById('apiDataPath');
+    const categoryFieldEl = document.getElementById('apiCategoryField');
+    const valueFieldEl = document.getElementById('apiValueField');
+
+    const url = urlEl ? urlEl.value.trim() : '';
+    const method = methodEl ? methodEl.value : 'GET';
+    const dataPath = dataPathEl ? dataPathEl.value.trim() : '';
+    const categoryField = categoryFieldEl ? categoryFieldEl.value.trim() : '';
+    const valueField = valueFieldEl ? valueFieldEl.value.trim() : '';
+
+    if (!url) {
+      this.showToast('请输入API接口地址');
+      return;
+    }
+
+    if (!categoryField || !valueField) {
+      this.showToast('请输入类目字段和数值字段');
+      return;
+    }
+
+    this.showToast('正在获取数据...');
+
+    fetch(url, { method })
+      .then(response => {
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        return response.json();
+      })
+      .then(json => {
+        let data = json;
+        
+        if (dataPath) {
+          const paths = dataPath.split('.');
+          for (const p of paths) {
+            if (data && data[p] !== undefined) {
+              data = data[p];
+            } else {
+              data = null;
+              break;
+            }
+          }
+        }
+
+        if (!Array.isArray(data)) {
+          if (data && data.data && Array.isArray(data.data)) {
+            data = data.data;
+          } else {
+            throw new Error('返回数据不是数组格式');
+          }
+        }
+
+        const newData = data
+          .filter(item => item[categoryField] !== undefined && item[valueField] !== undefined)
+          .map(item => ({
+            name: String(item[categoryField]),
+            value: Number(item[valueField]) || 0
+          }));
+
+        if (newData.length === 0) {
+          throw new Error('没有有效的数据');
+        }
+
+        this.state.data = newData;
+        this.renderDataEditor();
+        this.updateChart();
+        this.showToast(`成功获取 ${newData.length} 条数据`);
+      })
+      .catch(err => {
+        console.error('API请求失败:', err);
+        this.showToast('获取数据失败：' + err.message);
+      });
+  },
+
+  changeChartTheme(themeName) {
+    if (!this.chart) return;
+
+    const dom = document.getElementById('chart');
+    if (!dom) return;
+
+    this.chart.dispose();
+    this.chart = null;
+
+    if (themeName === 'default') {
+      this.chart = echarts.init(dom);
+    } else if (this.chartThemes[themeName]) {
+      if (!echarts.themeRegister || !echarts.themeRegister._themes || !echarts.themeRegister._themes[themeName]) {
+        echarts.registerTheme(themeName, this.chartThemes[themeName]);
+      }
+      this.chart = echarts.init(dom, themeName);
+    } else {
+      this.chart = echarts.init(dom, themeName);
+    }
+
+    this.updateChart();
+    this.showToast('主题已切换');
+  },
 };
  
 document.addEventListener('DOMContentLoaded', () => {
