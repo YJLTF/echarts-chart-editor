@@ -98,10 +98,26 @@ const ChartEditor = {
   },
  
   initChart() {
+    if (typeof echarts === 'undefined') {
+      this.showToast('ECharts 加载失败，请检查本地依赖');
+      const chartDom = document.getElementById('chart');
+      if (chartDom) {
+        chartDom.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-tertiary);font-size:14px;">ECharts 库加载失败</div>';
+      }
+      return;
+    }
     const chartDom = document.getElementById('chart');
+    if (!chartDom) return;
     this.chart = echarts.init(chartDom);
+    
+    let resizeTimer = null;
     window.addEventListener('resize', () => {
-      this.chart.resize();
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (this.chart) {
+          this.chart.resize();
+        }
+      }, 100);
     });
   },
  
@@ -554,10 +570,14 @@ const ChartEditor = {
   },
  
   updateChart() {
-    if (this.chart) {
+    if (!this.chart) return;
+    try {
       const option = this.getOption();
       this.chart.setOption(option, true);
       this.updateCodeView();
+    } catch (err) {
+      console.error('图表更新失败:', err);
+      this.showToast('图表更新失败');
     }
   },
  
@@ -796,6 +816,7 @@ const ChartEditor = {
     if (colorEl && textEl) {
       colorEl.addEventListener('input', () => {
         textEl.value = colorEl.value;
+        textEl.style.borderColor = '';
         if (group) {
           this.state[group][key] = colorEl.value;
         } else {
@@ -803,16 +824,29 @@ const ChartEditor = {
         }
         this.debounceUpdate();
       });
- 
+
       textEl.addEventListener('input', () => {
         if (/^#[0-9A-Fa-f]{6}$/.test(textEl.value)) {
           colorEl.value = textEl.value;
+          textEl.style.borderColor = '';
           if (group) {
             this.state[group][key] = textEl.value;
           } else {
             this.state[key] = textEl.value;
           }
           this.debounceUpdate();
+        } else if (textEl.value.length > 0) {
+          textEl.style.borderColor = 'var(--error-color)';
+        } else {
+          textEl.style.borderColor = '';
+        }
+      });
+
+      textEl.addEventListener('blur', () => {
+        if (!/^#[0-9A-Fa-f]{6}$/.test(textEl.value)) {
+          textEl.style.borderColor = '';
+          const currentColor = group ? this.state[group][key] : this.state[key];
+          textEl.value = currentColor;
         }
       });
     }
@@ -893,8 +927,17 @@ const ChartEditor = {
       input.addEventListener('input', (e) => {
         const index = parseInt(e.target.dataset.index);
         const field = e.target.dataset.field;
-        const value = field === 'value' ? Number(e.target.value) || 0 : e.target.value;
-        this.state.data[index][field] = value;
+        if (field === 'value') {
+          const raw = e.target.value;
+          if (raw === '' || raw === '-') {
+            this.state.data[index][field] = 0;
+          } else {
+            const num = Number(raw);
+            this.state.data[index][field] = isNaN(num) ? 0 : num;
+          }
+        } else {
+          this.state.data[index][field] = e.target.value;
+        }
         this.debounceUpdate();
       });
     });
@@ -935,8 +978,14 @@ const ChartEditor = {
   },
  
   exportConfig() {
-    const option = this.getOption();
-    const blob = new Blob([JSON.stringify(option, null, 2)], { type: 'application/json' });
+    const exportData = {
+      version: '1.0',
+      type: 'chart-editor-state',
+      chartType: this.chartType,
+      isDarkTheme: this.isDarkTheme,
+      state: JSON.parse(JSON.stringify(this.state))
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -945,23 +994,160 @@ const ChartEditor = {
     URL.revokeObjectURL(url);
     this.showToast('配置已导出');
   },
- 
+
   importConfig(event) {
     const file = event.target.files[0];
     if (!file) return;
- 
+
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const config = JSON.parse(e.target.result);
-        this.chart.setOption(config, true);
-        this.showToast('配置已导入');
+        
+        if (config.type === 'chart-editor-state' && config.state) {
+          this.applyState(config.state, config.chartType, config.isDarkTheme);
+          this.showToast('配置已导入');
+        } else {
+          if (this.chart) {
+            this.chart.setOption(config, true);
+          }
+          this.showToast('配置已导入（原生ECharts配置）');
+        }
       } catch (err) {
         this.showToast('导入失败：无效的JSON文件');
       }
     };
     reader.readAsText(file);
     event.target.value = '';
+  },
+
+  applyState(newState, chartType, isDarkTheme) {
+    if (isDarkTheme !== undefined && isDarkTheme !== this.isDarkTheme) {
+      this.isDarkTheme = isDarkTheme;
+      document.documentElement.setAttribute('data-theme', isDarkTheme ? 'dark' : 'light');
+    }
+
+    this.state = { ...this.state, ...newState };
+
+    if (chartType) {
+      this.chartType = chartType;
+      document.querySelectorAll('.chart-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.type === chartType);
+      });
+      this.updateSeriesVisibility();
+    }
+
+    this.syncUIFromState();
+    this.renderDataEditor();
+    
+    if (this.chart) {
+      this.updateChart();
+    }
+  },
+
+  syncUIFromState() {
+    const { state } = this;
+    
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    };
+    const setCheck = (id, checked) => {
+      const el = document.getElementById(id);
+      if (el) el.checked = checked;
+    };
+    const setText = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+
+    setCheck('titleShow', state.title.show);
+    setVal('titleText', state.title.text);
+    setVal('titleSubtext', state.title.subtext);
+    setVal('titleLeft', state.title.left);
+
+    setCheck('legendShow', state.legend.show);
+    setVal('legendPosition', state.legend.position);
+    setVal('legendOrient', state.legend.orient);
+
+    setCheck('tooltipShow', state.tooltip.show);
+    setVal('tooltipTrigger', state.tooltip.trigger);
+
+    const bgColorEl = document.getElementById('bgColor');
+    const bgColorTextEl = document.getElementById('bgColorText');
+    if (bgColorEl) bgColorEl.value = state.background.color;
+    if (bgColorTextEl) bgColorTextEl.value = state.background.color;
+
+    setCheck('animationShow', state.animation.show);
+    setVal('animationDuration', state.animation.duration);
+    setText('animationDurationValue', state.animation.duration + 'ms');
+
+    setVal('seriesName', state.series.name);
+    
+    const lineColorEl = document.getElementById('lineColor');
+    const lineColorTextEl = document.getElementById('lineColorText');
+    if (lineColorEl) lineColorEl.value = state.series.lineColor;
+    if (lineColorTextEl) lineColorTextEl.value = state.series.lineColor;
+    
+    setVal('lineWidth', state.series.lineWidth);
+    setText('lineWidthValue', state.series.lineWidth + 'px');
+    setVal('lineType', state.series.lineType);
+    setCheck('smoothLine', state.series.smooth);
+
+    setCheck('symbolShow', state.series.symbolShow);
+    setVal('symbolType', state.series.symbolType);
+    setVal('symbolSize', state.series.symbolSize);
+    setText('symbolSizeValue', state.series.symbolSize + 'px');
+
+    setCheck('areaShow', state.series.areaShow);
+    setVal('areaOpacity', state.series.areaOpacity);
+    setText('areaOpacityValue', state.series.areaOpacity + '%');
+
+    const barColorEl = document.getElementById('barColor');
+    const barColorTextEl = document.getElementById('barColorText');
+    if (barColorEl) barColorEl.value = state.series.barColor;
+    if (barColorTextEl) barColorTextEl.value = state.series.barColor;
+    
+    setVal('barWidth', state.series.barWidth);
+    setText('barWidthValue', state.series.barWidth + '%');
+    setVal('barRadius', state.series.barRadius);
+    setText('barRadiusValue', state.series.barRadius + 'px');
+
+    setVal('pieInnerRadius', state.series.pieInnerRadius);
+    setText('pieInnerRadiusValue', state.series.pieInnerRadius + '%');
+    setVal('pieOuterRadius', state.series.pieOuterRadius);
+    setText('pieOuterRadiusValue', state.series.pieOuterRadius + '%');
+    setVal('pieRose', state.series.pieRose);
+    setCheck('pieLabelShow', state.series.pieLabelShow);
+
+    setCheck('labelShow', state.series.labelShow);
+    setVal('labelPosition', state.series.labelPosition);
+    setVal('labelFontSize', state.series.labelFontSize);
+    setText('labelFontSizeValue', state.series.labelFontSize + 'px');
+
+    setVal('colorPalette', state.series.colorPalette);
+
+    setCheck('xAxisShow', state.xAxis.show);
+    setVal('xAxisType', state.xAxis.type);
+    setVal('xAxisName', state.xAxis.name);
+    const xAxisLineColorEl = document.getElementById('xAxisLineColor');
+    const xAxisLineColorTextEl = document.getElementById('xAxisLineColorText');
+    if (xAxisLineColorEl) xAxisLineColorEl.value = state.xAxis.lineColor;
+    if (xAxisLineColorTextEl) xAxisLineColorTextEl.value = state.xAxis.lineColor;
+    setCheck('xAxisGrid', state.xAxis.showGrid);
+
+    setCheck('yAxisShow', state.yAxis.show);
+    setVal('yAxisType', state.yAxis.type);
+    setVal('yAxisName', state.yAxis.name);
+    const yAxisLineColorEl = document.getElementById('yAxisLineColor');
+    const yAxisLineColorTextEl = document.getElementById('yAxisLineColorText');
+    if (yAxisLineColorEl) yAxisLineColorEl.value = state.yAxis.lineColor;
+    if (yAxisLineColorTextEl) yAxisLineColorTextEl.value = state.yAxis.lineColor;
+    setCheck('yAxisGrid', state.yAxis.showGrid);
+    setCheck('yAxisStartZero', state.yAxis.startZero);
+
+    setVal('seriesCount', state.seriesCount);
+    setText('seriesCountValue', state.seriesCount);
   },
  
   downloadImage() {
@@ -980,9 +1166,34 @@ const ChartEditor = {
   copyCode() {
     const option = this.getOption();
     const code = JSON.stringify(option, null, 2);
-    navigator.clipboard.writeText(code).then(() => {
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code)
+        .then(() => {
+          this.showToast('代码已复制到剪贴板');
+        })
+        .catch(() => {
+          this.fallbackCopy(code);
+        });
+    } else {
+      this.fallbackCopy(code);
+    }
+  },
+
+  fallbackCopy(text) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
       this.showToast('代码已复制到剪贴板');
-    });
+    } catch (err) {
+      this.showToast('复制失败，请手动复制');
+    }
+    document.body.removeChild(textarea);
   },
  
   toggleTheme() {
@@ -991,10 +1202,19 @@ const ChartEditor = {
     
     const bgColor = this.isDarkTheme ? '#1a1d24' : '#ffffff';
     this.state.background.color = bgColor;
-    document.getElementById('bgColor').value = bgColor;
-    document.getElementById('bgColorText').value = bgColor;
+    const bgColorEl = document.getElementById('bgColor');
+    const bgColorTextEl = document.getElementById('bgColorText');
+    if (bgColorEl) bgColorEl.value = bgColor;
+    if (bgColorTextEl) bgColorTextEl.value = bgColor;
     
-    this.chart = echarts.init(document.getElementById('chart'));
+    if (this.chart) {
+      this.chart.dispose();
+      this.chart = null;
+    }
+    const chartDom = document.getElementById('chart');
+    if (chartDom && typeof echarts !== 'undefined') {
+      this.chart = echarts.init(chartDom);
+    }
     this.updateChart();
     
     this.showToast(this.isDarkTheme ? '已切换到深色主题' : '已切换到浅色主题');
@@ -1009,13 +1229,37 @@ const ChartEditor = {
  
   toggleFullscreen() {
     const container = document.querySelector('.canvas-area');
-    if (!document.fullscreenElement) {
-      container.requestFullscreen().catch(err => {
+    if (!this.isFullscreen()) {
+      const request = container.requestFullscreen || 
+                      container.webkitRequestFullscreen || 
+                      container.mozRequestFullScreen || 
+                      container.msRequestFullscreen;
+      if (request) {
+        const promise = request.call(container);
+        if (promise && promise.catch) {
+          promise.catch(() => {
+            this.showToast('全屏模式不可用');
+          });
+        }
+      } else {
         this.showToast('全屏模式不可用');
-      });
+      }
     } else {
-      document.exitFullscreen();
+      const exit = document.exitFullscreen || 
+                   document.webkitExitFullscreen || 
+                   document.mozCancelFullScreen || 
+                   document.msExitFullscreen;
+      if (exit) {
+        exit.call(document);
+      }
     }
+  },
+
+  isFullscreen() {
+    return !!(document.fullscreenElement || 
+              document.webkitFullscreenElement || 
+              document.mozFullScreenElement || 
+              document.msFullscreenElement);
   },
  
   showToast(message) {
