@@ -1926,8 +1926,11 @@ const ChartEditor = {
     editor.innerHTML = '';
 
     const fieldConfig = this.chartFieldConfigs[this.chartType] || this.chartFieldConfigs.line;
+    const fieldCount = fieldConfig.length;
+    const gridTemplate = `repeat(${fieldCount}, 1fr) 30px`;
     
     if (header) {
+      header.style.gridTemplateColumns = gridTemplate;
       let headerHtml = '';
       fieldConfig.forEach(config => {
         headerHtml += `<span>${config.label}</span>`;
@@ -1938,6 +1941,7 @@ const ChartEditor = {
     this.state.data.forEach((item, index) => {
       const row = document.createElement('div');
       row.className = 'data-row';
+      row.style.gridTemplateColumns = gridTemplate;
       
       let inputsHtml = '';
       fieldConfig.forEach(config => {
