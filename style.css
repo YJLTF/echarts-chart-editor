@@ -688,12 +688,11 @@ body {
   margin-bottom: 12px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
-  overflow: hidden;
 }
  
 .data-table-header {
   display: grid;
-  grid-template-columns: 1fr 1fr 30px;
+  grid-template-columns: repeat(auto-fit, 1fr) 30px;
   gap: 0;
   padding: 8px 10px;
   background: var(--bg-tertiary);
@@ -705,7 +704,7 @@ body {
  
 .data-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 30px;
+  grid-template-columns: repeat(auto-fit, 1fr) 30px;
   gap: 4px;
   padding: 6px 8px;
   border-bottom: 1px solid var(--border-color);

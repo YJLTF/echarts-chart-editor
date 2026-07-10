@@ -320,6 +320,96 @@ const ChartEditor = {
     }
   },
 
+  chartFieldConfigs: {
+    line: [
+      { key: 'name', label: '类目字段', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    bar: [
+      { key: 'name', label: '类目字段', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    pie: [
+      { key: 'name', label: '名称字段', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    scatter: [
+      { key: 'name', label: '名称字段', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    radar: [
+      { key: 'name', label: '指标名称', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    gauge: [
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    funnel: [
+      { key: 'name', label: '阶段名称', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    pictorialBar: [
+      { key: 'name', label: '类目字段', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    area: [
+      { key: 'name', label: '类目字段', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    candlestick: [
+      { key: 'name', label: '时间字段', type: 'text' },
+      { key: 'open', label: '开盘价', type: 'number' },
+      { key: 'close', label: '收盘价', type: 'number' },
+      { key: 'low', label: '最低价', type: 'number' },
+      { key: 'high', label: '最高价', type: 'number' }
+    ],
+    effectScatter: [
+      { key: 'name', label: '名称字段', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    graph: [
+      { key: 'name', label: '节点名称', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    sankey: [
+      { key: 'source', label: '源节点', type: 'text' },
+      { key: 'target', label: '目标节点', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    tree: [
+      { key: 'name', label: '节点名称', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    sunburst: [
+      { key: 'name', label: '层级名称', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    treemap: [
+      { key: 'name', label: '名称字段', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    heatmap: [
+      { key: 'name', label: 'X轴类目', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    boxplot: [
+      { key: 'name', label: '类目名称', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    parallel: [
+      { key: 'name', label: '维度名称', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    themeRiver: [
+      { key: 'name', label: '主题名称', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ],
+    calendar: [
+      { key: 'name', label: '日期字段', type: 'text' },
+      { key: 'value', label: '数值字段', type: 'number' }
+    ]
+  },
+
   parsedFileData: null,
 
   chartThemes: {
@@ -564,6 +654,7 @@ const ChartEditor = {
     this.updateChart();
     this.updateSeriesVisibility();
     this.updateDataFormatHint();
+    this.updateApiFieldMappings();
     this.initDataSourceTabs();
     this.initFileUpload();
   },
@@ -1076,12 +1167,17 @@ const ChartEditor = {
           break;
  
         case 'candlestick':
-          const ohlcData = values.map((v, i) => [
-            v - 20,
-            v + 30,
-            v - 40,
-            v + 50
-          ]);
+          let ohlcData = [];
+          if (state.data.length > 0 && state.data[0].value && Array.isArray(state.data[0].value) && state.data[0].value.length === 4) {
+            ohlcData = state.data.map(d => d.value);
+          } else {
+            ohlcData = values.map((v, i) => [
+              v - 20,
+              v + 30,
+              v - 40,
+              v + 50
+            ]);
+          }
           baseSeries = {
             ...baseSeries,
             type: 'candlestick',
@@ -1143,20 +1239,38 @@ const ChartEditor = {
           const sankeyLinks = [];
           const nodeSet = new Set();
           
-          state.data.forEach((d, i) => {
-            if (!nodeSet.has(d.name)) {
-              nodeSet.add(d.name);
-              sankeyNodes.push({ name: d.name });
-            }
-            if (i < state.data.length - 1) {
-              const targetName = state.data[i + 1].name;
+          state.data.forEach((d) => {
+            if (d.source !== undefined && d.target !== undefined) {
+              if (!nodeSet.has(d.source)) {
+                nodeSet.add(d.source);
+                sankeyNodes.push({ name: d.source });
+              }
+              if (!nodeSet.has(d.target)) {
+                nodeSet.add(d.target);
+                sankeyNodes.push({ name: d.target });
+              }
               sankeyLinks.push({
-                source: d.name,
-                target: targetName,
-                value: d.value
+                source: d.source,
+                target: d.target,
+                value: d.value || 1
               });
+            } else if (d.name !== undefined) {
+              if (!nodeSet.has(d.name)) {
+                nodeSet.add(d.name);
+                sankeyNodes.push({ name: d.name });
+              }
             }
           });
+          
+          if (sankeyLinks.length === 0 && sankeyNodes.length > 1) {
+            for (let i = 0; i < sankeyNodes.length - 1; i++) {
+              sankeyLinks.push({
+                source: sankeyNodes[i].name,
+                target: sankeyNodes[i + 1].name,
+                value: state.data[i]?.value || 1
+              });
+            }
+          }
           
           baseSeries = {
             ...baseSeries,
@@ -1694,10 +1808,71 @@ const ChartEditor = {
   },
  
   changeChartType(type) {
+    const oldType = this.chartType;
     this.chartType = type;
     this.updateSeriesVisibility();
     this.updateDataFormatHint();
+    
+    this.convertDataFormat(oldType, type);
+    
+    this.renderDataEditor();
     this.updateChart();
+  },
+
+  convertDataFormat(oldType, newType) {
+    const oldConfig = this.chartFieldConfigs[oldType] || this.chartFieldConfigs.line;
+    const newConfig = this.chartFieldConfigs[newType] || this.chartFieldConfigs.line;
+    
+    const oldKeys = oldConfig.map(c => c.key);
+    const newKeys = newConfig.map(c => c.key);
+    
+    const hasNameValue = oldKeys.includes('name') && oldKeys.includes('value');
+    const hasSourceTarget = newKeys.includes('source') && newKeys.includes('target');
+    
+    if (hasNameValue && hasSourceTarget) {
+      this.state.data = this.state.data.map((item, index) => {
+        const nextItem = this.state.data[index + 1];
+        return {
+          source: item.name || `节点${index + 1}`,
+          target: nextItem ? (nextItem.name || `节点${index + 2}`) : `节点${index + 1}`,
+          value: item.value || 1
+        };
+      });
+      return;
+    }
+    
+    if (hasSourceTarget && hasNameValue) {
+      this.state.data = this.state.data.map((item, index) => ({
+        name: item.source || item.target || `数据${index + 1}`,
+        value: item.value || 0
+      }));
+      return;
+    }
+    
+    if (newKeys.includes('open') && newKeys.includes('close') && hasNameValue) {
+      this.state.data = this.state.data.map(item => ({
+        name: item.name,
+        open: item.value - 20,
+        close: item.value + 30,
+        low: item.value - 40,
+        high: item.value + 50
+      }));
+      return;
+    }
+    
+    if (hasNameValue && !newKeys.includes('name')) {
+      this.state.data = this.state.data.map(item => ({
+        value: item.value || 0
+      }));
+      return;
+    }
+    
+    if (!hasNameValue && newKeys.includes('name')) {
+      this.state.data = this.state.data.map((item, index) => ({
+        name: `数据${index + 1}`,
+        value: item.value || 0
+      }));
+    }
   },
  
   updateSeriesVisibility() {
@@ -1747,14 +1922,32 @@ const ChartEditor = {
  
   renderDataEditor() {
     const editor = document.getElementById('dataEditor');
+    const header = document.getElementById('dataTableHeader');
     editor.innerHTML = '';
- 
+
+    const fieldConfig = this.chartFieldConfigs[this.chartType] || this.chartFieldConfigs.line;
+    
+    if (header) {
+      let headerHtml = '';
+      fieldConfig.forEach(config => {
+        headerHtml += `<span>${config.label}</span>`;
+      });
+      header.innerHTML = headerHtml;
+    }
+
     this.state.data.forEach((item, index) => {
       const row = document.createElement('div');
       row.className = 'data-row';
-      row.innerHTML = `
-        <input type="text" value="${item.name}" data-index="${index}" data-field="name">
-        <input type="number" value="${item.value}" data-index="${index}" data-field="value">
+      
+      let inputsHtml = '';
+      fieldConfig.forEach(config => {
+        const value = item[config.key];
+        const displayValue = Array.isArray(value) ? value.join(',') : value;
+        const inputType = config.type === 'number' ? 'number' : 'text';
+        inputsHtml += `<input type="${inputType}" value="${displayValue}" data-index="${index}" data-field="${config.key}">`;
+      });
+      
+      row.innerHTML = `${inputsHtml}
         <button class="delete-btn" data-index="${index}" title="删除">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="3 6 5 6 21 6"/>
@@ -1764,12 +1957,14 @@ const ChartEditor = {
       `;
       editor.appendChild(row);
     });
- 
+
     editor.querySelectorAll('input').forEach(input => {
       input.addEventListener('input', (e) => {
         const index = parseInt(e.target.dataset.index);
         const field = e.target.dataset.field;
-        if (field === 'value') {
+        const config = fieldConfig.find(c => c.key === field);
+        
+        if (config && config.type === 'number') {
           const raw = e.target.value;
           if (raw === '' || raw === '-') {
             this.state.data[index][field] = 0;
@@ -1783,7 +1978,7 @@ const ChartEditor = {
         this.debounceUpdate();
       });
     });
- 
+
     editor.querySelectorAll('.delete-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const index = parseInt(e.currentTarget.dataset.index);
@@ -1801,10 +1996,24 @@ const ChartEditor = {
   addDataItem() {
     const names = ['数据A', '数据B', '数据C', '数据D', '数据E', '数据F', '数据G', '数据H', '数据I', '数据J'];
     const nextIndex = this.state.data.length + 1;
-    this.state.data.push({
-      name: names[nextIndex - 1] || `数据${nextIndex}`,
-      value: Math.floor(Math.random() * 200) + 50
+    const fieldConfig = this.chartFieldConfigs[this.chartType] || this.chartFieldConfigs.line;
+    
+    const newItem = {};
+    fieldConfig.forEach(config => {
+      if (config.key === 'name') {
+        newItem[config.key] = names[nextIndex - 1] || `数据${nextIndex}`;
+      } else if (config.key === 'source') {
+        newItem[config.key] = `源节点${nextIndex}`;
+      } else if (config.key === 'target') {
+        newItem[config.key] = `目标节点${nextIndex}`;
+      } else if (config.type === 'number') {
+        newItem[config.key] = Math.floor(Math.random() * 200) + 50;
+      } else {
+        newItem[config.key] = '';
+      }
     });
+    
+    this.state.data.push(newItem);
     this.renderDataEditor();
     this.updateChart();
   },
@@ -2188,6 +2397,32 @@ const ChartEditor = {
       hintTextEl.textContent = hint.text;
       hintExampleEl.textContent = '示例：' + hint.example;
     }
+    
+    this.updateApiFieldMappings();
+  },
+
+  updateApiFieldMappings() {
+    const container = document.getElementById('apiFieldMappings');
+    if (!container) return;
+    
+    const fieldConfig = this.chartFieldConfigs[this.chartType] || this.chartFieldConfigs.line;
+    
+    container.innerHTML = '';
+    
+    fieldConfig.forEach(config => {
+      const propItem = document.createElement('div');
+      propItem.className = 'prop-item';
+      
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = `apiField_${config.key}`;
+      input.className = 'input';
+      input.placeholder = config.key;
+      
+      propItem.innerHTML = `<label>${config.label}</label>`;
+      propItem.appendChild(input);
+      container.appendChild(propItem);
+    });
   },
 
   initDataSourceTabs() {
@@ -2389,32 +2624,40 @@ const ChartEditor = {
   showParseResult(rowCount, fields) {
     const resultEl = document.getElementById('fileParseResult');
     const infoEl = document.getElementById('parseInfo');
-    const categorySelect = document.getElementById('categoryField');
-    const valueSelect = document.getElementById('valueField');
+    const mappingContainer = document.getElementById('dataMappingContainer');
     
-    if (!resultEl || !infoEl || !categorySelect || !valueSelect) return;
+    if (!resultEl || !infoEl || !mappingContainer) return;
 
     const fileName = this.parsedFileData ? this.parsedFileData.fileName : '';
     infoEl.innerHTML = `文件：${fileName}<br>数据行数：${rowCount}<br>字段数量：${fields.length}`;
 
-    categorySelect.innerHTML = '';
-    valueSelect.innerHTML = '';
+    const fieldConfig = this.chartFieldConfigs[this.chartType] || this.chartFieldConfigs.line;
     
-    fields.forEach((field, idx) => {
-      const opt1 = document.createElement('option');
-      opt1.value = field;
-      opt1.textContent = field;
-      categorySelect.appendChild(opt1);
+    mappingContainer.innerHTML = '';
+    
+    fieldConfig.forEach((config, idx) => {
+      const propItem = document.createElement('div');
+      propItem.className = 'prop-item';
+      
+      const select = document.createElement('select');
+      select.id = `fieldMapping_${config.key}`;
+      select.className = 'select';
+      
+      fields.forEach((field, fIdx) => {
+        const opt = document.createElement('option');
+        opt.value = field;
+        opt.textContent = field;
+        select.appendChild(opt);
+      });
 
-      const opt2 = document.createElement('option');
-      opt2.value = field;
-      opt2.textContent = field;
-      valueSelect.appendChild(opt2);
+      if (idx < fields.length) {
+        select.selectedIndex = idx;
+      }
+
+      propItem.innerHTML = `<label>${config.label}</label>`;
+      propItem.appendChild(select);
+      mappingContainer.appendChild(propItem);
     });
-
-    if (fields.length >= 2) {
-      valueSelect.selectedIndex = 1;
-    }
 
     resultEl.style.display = 'block';
   },
@@ -2425,20 +2668,76 @@ const ChartEditor = {
       return;
     }
 
-    const categoryField = document.getElementById('categoryField').value;
-    const valueField = document.getElementById('valueField').value;
+    const fieldConfig = this.chartFieldConfigs[this.chartType] || this.chartFieldConfigs.line;
+    
+    const fieldMappings = {};
+    let allFieldsSelected = true;
+    
+    fieldConfig.forEach(config => {
+      const select = document.getElementById(`fieldMapping_${config.key}`);
+      if (select && select.value) {
+        fieldMappings[config.key] = select.value;
+      } else {
+        allFieldsSelected = false;
+      }
+    });
 
-    if (!categoryField || !valueField) {
-      this.showToast('请选择类目字段和数值字段');
+    if (!allFieldsSelected) {
+      this.showToast('请选择所有必要的字段');
       return;
     }
 
-    const newData = this.parsedFileData.data
-      .filter(item => item[categoryField] !== undefined && item[valueField] !== undefined)
-      .map(item => ({
-        name: String(item[categoryField]),
-        value: Number(item[valueField]) || 0
-      }));
+    let newData = [];
+    
+    switch (this.chartType) {
+      case 'sankey':
+        newData = this.parsedFileData.data
+          .filter(item => item[fieldMappings.source] !== undefined && 
+                         item[fieldMappings.target] !== undefined && 
+                         item[fieldMappings.value] !== undefined)
+          .map(item => ({
+            source: String(item[fieldMappings.source]),
+            target: String(item[fieldMappings.target]),
+            value: Number(item[fieldMappings.value]) || 0
+          }));
+        break;
+        
+      case 'candlestick':
+        newData = this.parsedFileData.data
+          .filter(item => item[fieldMappings.name] !== undefined && 
+                         item[fieldMappings.open] !== undefined && 
+                         item[fieldMappings.close] !== undefined &&
+                         item[fieldMappings.low] !== undefined &&
+                         item[fieldMappings.high] !== undefined)
+          .map(item => ({
+            name: String(item[fieldMappings.name]),
+            value: [
+              Number(item[fieldMappings.open]) || 0,
+              Number(item[fieldMappings.close]) || 0,
+              Number(item[fieldMappings.low]) || 0,
+              Number(item[fieldMappings.high]) || 0
+            ]
+          }));
+        break;
+        
+      case 'gauge':
+        newData = this.parsedFileData.data
+          .filter(item => item[fieldMappings.value] !== undefined)
+          .map(item => ({
+            name: '仪表盘',
+            value: Number(item[fieldMappings.value]) || 0
+          }));
+        break;
+        
+      default:
+        newData = this.parsedFileData.data
+          .filter(item => item[fieldMappings.name] !== undefined && item[fieldMappings.value] !== undefined)
+          .map(item => ({
+            name: String(item[fieldMappings.name]),
+            value: Number(item[fieldMappings.value]) || 0
+          }));
+        break;
+    }
 
     if (newData.length === 0) {
       this.showToast('没有有效的数据');
@@ -2462,22 +2761,31 @@ const ChartEditor = {
     const urlEl = document.getElementById('apiUrl');
     const methodEl = document.getElementById('apiMethod');
     const dataPathEl = document.getElementById('apiDataPath');
-    const categoryFieldEl = document.getElementById('apiCategoryField');
-    const valueFieldEl = document.getElementById('apiValueField');
 
     const url = urlEl ? urlEl.value.trim() : '';
     const method = methodEl ? methodEl.value : 'GET';
     const dataPath = dataPathEl ? dataPathEl.value.trim() : '';
-    const categoryField = categoryFieldEl ? categoryFieldEl.value.trim() : '';
-    const valueField = valueFieldEl ? valueFieldEl.value.trim() : '';
+
+    const fieldConfig = this.chartFieldConfigs[this.chartType] || this.chartFieldConfigs.line;
+    const fieldMappings = {};
+    let allFieldsConfigured = true;
+
+    fieldConfig.forEach(config => {
+      const fieldEl = document.getElementById(`apiField_${config.key}`);
+      if (fieldEl && fieldEl.value.trim()) {
+        fieldMappings[config.key] = fieldEl.value.trim();
+      } else {
+        allFieldsConfigured = false;
+      }
+    });
 
     if (!url) {
       this.showToast('请输入API接口地址');
       return;
     }
 
-    if (!categoryField || !valueField) {
-      this.showToast('请输入类目字段和数值字段');
+    if (!allFieldsConfigured) {
+      this.showToast('请配置所有必要的字段');
       return;
     }
 
@@ -2511,12 +2819,57 @@ const ChartEditor = {
           }
         }
 
-        const newData = data
-          .filter(item => item[categoryField] !== undefined && item[valueField] !== undefined)
-          .map(item => ({
-            name: String(item[categoryField]),
-            value: Number(item[valueField]) || 0
-          }));
+        let newData = [];
+        
+        switch (this.chartType) {
+          case 'sankey':
+            newData = data
+              .filter(item => item[fieldMappings.source] !== undefined && 
+                             item[fieldMappings.target] !== undefined && 
+                             item[fieldMappings.value] !== undefined)
+              .map(item => ({
+                source: String(item[fieldMappings.source]),
+                target: String(item[fieldMappings.target]),
+                value: Number(item[fieldMappings.value]) || 0
+              }));
+            break;
+            
+          case 'candlestick':
+            newData = data
+              .filter(item => item[fieldMappings.name] !== undefined && 
+                             item[fieldMappings.open] !== undefined && 
+                             item[fieldMappings.close] !== undefined &&
+                             item[fieldMappings.low] !== undefined &&
+                             item[fieldMappings.high] !== undefined)
+              .map(item => ({
+                name: String(item[fieldMappings.name]),
+                value: [
+                  Number(item[fieldMappings.open]) || 0,
+                  Number(item[fieldMappings.close]) || 0,
+                  Number(item[fieldMappings.low]) || 0,
+                  Number(item[fieldMappings.high]) || 0
+                ]
+              }));
+            break;
+            
+          case 'gauge':
+            newData = data
+              .filter(item => item[fieldMappings.value] !== undefined)
+              .map(item => ({
+                name: '仪表盘',
+                value: Number(item[fieldMappings.value]) || 0
+              }));
+            break;
+            
+          default:
+            newData = data
+              .filter(item => item[fieldMappings.name] !== undefined && item[fieldMappings.value] !== undefined)
+              .map(item => ({
+                name: String(item[fieldMappings.name]),
+                value: Number(item[fieldMappings.value]) || 0
+              }));
+            break;
+        }
 
         if (newData.length === 0) {
           throw new Error('没有有效的数据');
